@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ネガティブとの向き合い方タイプ診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f14;
+    --surface: #1a1a24;
+    --surface-hover: #22222f;
+    --border: #2a2a3a;
+    --text: #e8e6f0;
+    --text-dim: #8b89a0;
+    --accent-a: #7c6cf0;
+    --accent-b: #f06c9b;
+    --accent-c: #6cf0d2;
+    --accent-d: #f0c86c;
+    --gradient-a: linear-gradient(135deg, #7c6cf0, #a06cf0);
+    --gradient-b: linear-gradient(135deg, #f06c9b, #f06c6c);
+    --gradient-c: linear-gradient(135deg, #6cf0d2, #6cd2f0);
+    --gradient-d: linear-gradient(135deg, #f0c86c, #f0a06c);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .noise-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    position: relative;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .start-screen {
+    text-align: center;
+    padding-top: 60px;
+  }
+
+  .start-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 32px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    box-shadow: 0 8px 40px rgba(124, 108, 240, 0.3);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .start-title {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text), var(--accent-a));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .start-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    margin-bottom: 40px;
+    padding: 0 8px;
+  }
+
+  .start-meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .start-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 48px;
+    border: none;
+    border-radius: 60px;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    color: #fff;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 24px rgba(124, 108, 240, 0.3);
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 32px rgba(124, 108, 240, 0.5);
+  }
+
+  .btn-start:active { transform: translateY(0); }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .question-number {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .question-text {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.7;
+    margin-bottom: 32px;
+    min-height: 68px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option-btn {
+    width: 100%;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(124,108,240,0.08), rgba(240,108,155,0.08));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .option-btn:hover {
+    border-color: var(--accent-a);
+    background: var(--surface-hover);
+    transform: translateX(4px);
+  }
+
+  .option-btn:hover::before { opacity: 1; }
+
+  .option-btn:active {
+    transform: translateX(2px) scale(0.99);
+  }
+
+  .option-btn.selected {
+    border-color: var(--accent-a);
+    background: rgba(124, 108, 240, 0.12);
+    animation: pulse-select 0.4s ease;
+  }
+
+  @keyframes pulse-select {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+
+  .result-screen { padding-top: 20px; }
+
+  .result-badge {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .result-type-card {
+    border-radius: 24px;
+    padding: 36px 24px;
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-type-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.08;
+    background: radial-gradient(circle at 30% 20%, currentColor, transparent 70%);
+  }
+
+  .result-emoji {
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .result-type-name {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .result-type-sub {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-bottom: 0;
+  }
+
+  .result-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .result-section-title {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-section p {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--text-dim);
+  }
+
+  .perspective-box {
+    background: linear-gradient(135deg, rgba(124,108,240,0.1), rgba(108,240,210,0.1));
+    border: 1px solid rgba(124,108,240,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+
+  .perspective-box p {
+    color: var(--text) !important;
+    font-size: 14px !important;
+    line-height: 1.9 !important;
+  }
+
+  .perspective-label {
+    font-size: 11px;
+    color: var(--accent-a);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .btn-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .btn-retry {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .btn-retry:hover {
+    border-color: var(--accent-a);
+    background: var(--surface-hover);
+  }
+
+  .btn-share {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    color: #fff;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(124,108,240,0.25);
+  }
+
+  .btn-share:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(124,108,240,0.4);
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .credit {
+    text-align: center;
+    margin-top: 32px;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  .credit a {
+    color: var(--accent-a);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+<div class="app">
+
+  <div id="start-screen" class="screen start-screen active">
+    <div class="start-icon">🪞</div>
+    <h1 class="start-title">ネガティブとの<br>向き合い方タイプ診断</h1>
+    <p class="start-desc">
+      ネガティブな感情は「敵」じゃない。<br>
+      ただ、人によって付き合い方が違うだけ。<br><br>
+      あなたがネガティブとどう向き合っているか、<br>
+      10の質問で見てみよう。
+    </p>
+    <div class="start-meta">
+      <span>📝 全10問</span>
+      <span>⏱ 約3分</span>
+      <span>🎯 6タイプ</span>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">診断をはじめる →</button>
+  </div>
+
+  <div id="question-screen" class="screen">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div id="question-container" class="fade-in">
+      <div class="question-number" id="question-number"></div>
+      <div class="question-text" id="question-text"></div>
+      <div class="options" id="options-container"></div>
+    </div>
+  </div>
+
+  <div id="result-screen" class="screen result-screen"></div>
+
+</div>
+
+<script>
+/*
+ * 学術的ベース:
+ * - Lazarus & Folkman (1984) ストレスコーピング理論: 問題焦点型 / 情動焦点型 / 社会的支援希求
+ * - Endler & Parker (1990) CISS: 課題志向 / 情動志向 / 回避志向（気晴らし・社会的転換）
+ * - Gross (1998, 2002) 感情制御プロセスモデル: 認知的再評価 / 表出抑制
+ *
+ * ※エンタメ診断です。臨床的な妥当性・信頼性の検証は行っていません。
+ */
+
+const questions = [
+  {
+    q: "仕事で想定外のトラブルが起きた。まず何をする？",
+    opts: [
+      { text: "状況を整理して、何が原因か突き止めようとする", scores: { analyst: 3 } },
+      { text: "とりあえず深呼吸して、一旦その場から離れる", scores: { escaper: 3 } },
+      { text: "「自分のせいかも」と頭をよぎる", scores: { absorber: 2, armor: 1 } },
+      { text: "すぐ誰かに「ちょっと聞いて」と声をかける", scores: { connector: 3 } }
+    ]
+  },
+  {
+    q: "理不尽に怒られたあと、自分の気持ちをどう扱う？",
+    opts: [
+      { text: "「相手にも事情があったのかも」と別の見方を探す", scores: { optimist: 3 } },
+      { text: "悔しいけど、表には出さずに普通に振る舞う", scores: { armor: 3 } },
+      { text: "モヤモヤを誰かに話して発散する", scores: { connector: 2, escaper: 1 } },
+      { text: "怒りの原因を分析して、再発を防ぐ方法を考える", scores: { analyst: 3 } }
+    ]
+  },
+  {
+    q: "夜、布団に入ってから嫌なことを思い出した。どうなる？",
+    opts: [
+      { text: "「なぜあの時ああしたんだろう」とぐるぐる考え続ける", scores: { absorber: 3 } },
+      { text: "スマホや動画に切り替えて考えないようにする", scores: { escaper: 3 } },
+      { text: "「まあ明日は明日だ」と切り替えて寝る", scores: { optimist: 2, escaper: 1 } },
+      { text: "「もっとちゃんとやれたはず」と自分に腹が立つ", scores: { armor: 2, absorber: 1 } }
+    ]
+  },
+  {
+    q: "大きな決断で迷っているとき、一番しっくりくるのは？",
+    opts: [
+      { text: "信頼できる人に相談して意見をもらう", scores: { connector: 3 } },
+      { text: "情報を集めて、メリット・デメリットを比較する", scores: { analyst: 3 } },
+      { text: "直感を信じて「えいっ」と決める", scores: { optimist: 2, escaper: 1 } },
+      { text: "決断を先延ばしにして、別のことに集中する", scores: { escaper: 2, armor: 1 } }
+    ]
+  },
+  {
+    q: "友人が深刻な悩みを打ち明けてきた。自然に出る反応は？",
+    opts: [
+      { text: "気持ちに寄り添って、ただ聞く（でも自分もつらくなる）", scores: { absorber: 3 } },
+      { text: "「こうしてみたら？」と解決策を一緒に考える", scores: { analyst: 2, connector: 1 } },
+      { text: "「大丈夫、きっとうまくいくよ」と励ます", scores: { optimist: 2, armor: 1 } },
+      { text: "話を聞いた後、気分転換に誘って場を変える", scores: { escaper: 2, connector: 1 } }
+    ]
+  },
+  {
+    q: "期待していたことがダメになった。どう受け止める？",
+    opts: [
+      { text: "「この経験にも意味がある」と捉え直そうとする", scores: { optimist: 3 } },
+      { text: "がっかりしてるけど、周りには「別に平気」と言う", scores: { armor: 3 } },
+      { text: "なぜダメだったか徹底的に振り返る", scores: { analyst: 2, absorber: 1 } },
+      { text: "落ち込む自分を責めて「こんなことで凹むな」と思う", scores: { absorber: 2, armor: 1 } }
+    ]
+  },
+  {
+    q: "やることが山積みでパンクしそう。どう対処する？",
+    opts: [
+      { text: "リストを作って優先順位をつけ、一つずつ片付ける", scores: { analyst: 3 } },
+      { text: "一旦全部忘れて、好きなことをしてリフレッシュする", scores: { escaper: 3 } },
+      { text: "「全部できなかったらどうしよう」と不安に飲まれる", scores: { absorber: 3 } },
+      { text: "歯を食いしばって、とにかく手を動かし続ける", scores: { armor: 3 } }
+    ]
+  },
+  {
+    q: "「自分を変えたい」と思うとき、それはどんな気持ち？",
+    opts: [
+      { text: "もっと強くならなきゃ、弱音を見せたくない", scores: { armor: 3 } },
+      { text: "変わりたいのに変われない自分がもどかしい", scores: { absorber: 3 } },
+      { text: "変えるというより、もっと自分を理解してほしい", scores: { connector: 3 } },
+      { text: "新しい視点や考え方を取り入れて成長したい", scores: { optimist: 2, analyst: 1 } }
+    ]
+  },
+  {
+    q: "自分より成果を出している同世代を見たとき、正直な気持ちは？",
+    opts: [
+      { text: "「自分のペースでやればいい」と切り替えられる", scores: { optimist: 3 } },
+      { text: "冷静に「何が違うのか」を分析して参考にする", scores: { analyst: 3 } },
+      { text: "比べても仕方ないと思いつつ、じわじわ凹む", scores: { absorber: 2, armor: 1 } },
+      { text: "見ないようにする。SNSをミュートすることも", scores: { escaper: 3 } }
+    ]
+  },
+  {
+    q: "ネガティブな感情に対する、一番正直な本音は？",
+    opts: [
+      { text: "うまく分析すればコントロールできると思う", scores: { analyst: 3 } },
+      { text: "できれば感じたくない。意識から消したい", scores: { escaper: 3 } },
+      { text: "感じること自体は自然なこと。問題は解釈の仕方", scores: { optimist: 3 } },
+      { text: "感じてしまう自分が嫌。もっとタフでありたい", scores: { armor: 2, absorber: 1 } }
+    ]
+  }
+];
+
+const types = {
+  analyst: {
+    emoji: "🔍",
+    name: "ロジック分析タイプ",
+    sub: "Task-Oriented Coping Style",
+    color: "var(--accent-a)",
+    gradient: "var(--gradient-a)",
+    border: "rgba(124,108,240,0.3)",
+    desc: "ストレスに直面したとき、原因を特定し、計画を立てて問題そのものを解決しようとするパターン。心理学ではこれを「課題志向型コーピング」と呼び、問題の構造が明確な場面では最も適応的とされている。感情よりも事実を優先し、冷静に状況を分析できるのが持ち味。",
+    strength: "問題を構造化して解決に向かう力は、仕事や学習の場面で大きなアドバンテージになる。同じ失敗を繰り返しにくく、周囲からも「頼れる人」として信頼されやすい。ストレス研究でも、課題志向のコーピングは心理的な適応と正の関連があることが示されている。",
+    trap: "すべてのストレスが「分析で解決できる問題」とは限らない。人間関係の悩みや漠然とした不安のように、明確な正解がないテーマに分析を持ち込むと、「解けない問題をずっと解こうとしている」状態になり、かえって消耗することがある。",
+    perspective: "分析はとても強い武器。でも、それは「問題がある」ことが前提の道具。たまには「今はただつらいだけで、解くべき問題はない」と認めるだけで、ふっと力が抜けることがあるよ。"
+  },
+  escaper: {
+    emoji: "💨",
+    name: "リセット回避タイプ",
+    sub: "Avoidance-Distraction Coping Style",
+    color: "var(--accent-c)",
+    gradient: "var(--gradient-c)",
+    border: "rgba(108,240,210,0.3)",
+    desc: "ストレスを感じると、注意を別のことに向けてやり過ごそうとするパターン。心理学では「回避志向型コーピング（気晴らし）」に分類され、短期的にはストレスの影響を緩和する効果がある一方、長期化すると未処理の感情が蓄積しやすいとされている。",
+    strength: "切り替えの速さは実際に有効なストレス対処法のひとつ。自分ではコントロールできない問題（他人の態度、過去の出来事など）に対しては、あえて距離を取る方が適応的な場合も多い。周囲からは「さっぱりした人」と見られやすい。",
+    trap: "「考えないようにする」と「消化する」は別のプロセス。回避を続けると、ふとした瞬間に処理されなかった感情がまとめて出てくることがある。また、本当に向き合うべき問題からも目を逸らすクセがつくリスクがある。",
+    perspective: "距離を取ること自体は悪くない。大事なのは、それが「意識的な選択」か「自動的な逃避」か。「今は考えない」と決めて離れるのと、無意識に避け続けるのでは、同じ行動でも心への影響が全然違うよ。"
+  },
+  absorber: {
+    emoji: "🌊",
+    name: "全吸収スポンジタイプ",
+    sub: "Emotion-Oriented Coping Style",
+    color: "var(--accent-b)",
+    gradient: "var(--gradient-b)",
+    border: "rgba(240,108,155,0.3)",
+    desc: "ストレス場面で感情に強く巻き込まれ、自責や反芻（同じことをぐるぐる考える）に陥りやすいパターン。心理学では「情動志向型コーピング」に分類され、感受性の高さと表裏一体の特性。他者の感情も吸収しやすく、共感力が高い反面、感情的に消耗しやすい。",
+    strength: "深く感じ取れるからこそ、人の痛みに本当の意味で寄り添える。その感受性はクリエイティブな表現や、人を支える仕事において替えのきかない資質。また、自分の内面を見つめる力が強いため、適切なサポートがあれば深い自己理解につながる。",
+    trap: "「自分が悪い」がデフォルト設定になっていると、あらゆる出来事を自責の材料にしてしまう。反芻（rumination）は研究上、抑うつや不安との関連が繰り返し示されている。優しさが自分を追い詰める燃料になりやすい。",
+    perspective: "たくさん感じることは「弱さ」じゃなくて「容量の大きさ」。ただ、コップには限界がある。大事なのは容量を小さくすることじゃなく、溢れる前に少しずつ流す仕組みを持つこと。感じる力を残したまま、楽になる方法はあるよ。"
+  },
+  armor: {
+    emoji: "🛡️",
+    name: "鎧モード防衛タイプ",
+    sub: "Expressive Suppression Style",
+    color: "var(--accent-d)",
+    gradient: "var(--gradient-d)",
+    border: "rgba(240,200,108,0.3)",
+    desc: "ネガティブな感情を表に出さず、「自分は大丈夫」と振る舞い続けるパターン。心理学では「表出抑制（expressive suppression）」と呼ばれ、感情の体験自体は減らさずに表現だけを止める戦略とされている。責任感が強く、「弱さを見せてはいけない」という信念が根底にある。",
+    strength: "逆境での粘り強さは本物。感情に流されず行動できるため、危機的な状況でも冷静さを保てる。周囲からの信頼も厚く、リーダー的な役割を任されることが多い。",
+    trap: "研究によれば、表出抑制は感情体験そのものは減らさないため、内側ではストレスが蓄積し続ける。また、感情を見せないことで周囲との心理的距離が生まれやすく、必要な助けを得るタイミングが遅れがちになる。",
+    perspective: "鎧を脱ぐことは「弱さ」じゃない。むしろ、脱ぎ方を知っている人こそ本当に強い。「頑張る」と「無理する」の境界線は、自分では気づきにくい。たまに「今、鎧なしで立てるかな？」と自分に聞いてみるだけでも、何かが変わるかもしれないよ。"
+  },
+  optimist: {
+    emoji: "☀️",
+    name: "ポジティブ変換タイプ",
+    sub: "Cognitive Reappraisal Style",
+    color: "#f0c86c",
+    gradient: "linear-gradient(135deg, #f0c86c, #f0e06c)",
+    border: "rgba(240,200,108,0.3)",
+    desc: "ストレスフルな出来事に対して、その意味や解釈を変えることで感情への影響をコントロールするパターン。心理学では「認知的再評価（cognitive reappraisal）」と呼ばれ、感情が生まれる前の段階で介入するため、最も適応的な感情制御戦略の一つとされている。",
+    strength: "認知的再評価は、ネガティブ感情の体験自体を減らす効果が実証されている。回復力が高く、失敗からの立ち直りが早い。日常的にこの戦略を使う人は、ポジティブ感情が多く、対人関係も良好な傾向がある。",
+    trap: "「ポジティブに捉えなきゃ」が義務になると、本当につらいときに自分の感情を否定してしまう。再評価は「感情を感じた上で解釈を変える」ことであって「感情をなかったことにする」こととは違う。この区別が曖昧になると、静かに消耗する。",
+    perspective: "前向きな解釈ができるのは素晴らしい才能。でも、曇りの日に「晴れてる」と言い続ける必要はない。「今日は曇りだな」と認めた上で、傘を持って歩けるのが一番しなやか。再評価の前に、まず「今の気持ち」を一瞬だけ受け止める習慣があると、もっと楽になるよ。"
+  },
+  connector: {
+    emoji: "🤝",
+    name: "つながり希求タイプ",
+    sub: "Social Support Seeking Style",
+    color: "var(--accent-c)",
+    gradient: "linear-gradient(135deg, #6cd2f0, #6c9ef0)",
+    border: "rgba(108,210,240,0.3)",
+    desc: "ストレスを感じたとき、人との関わりの中で感情を処理するパターン。心理学では「社会的支援希求型コーピング」に分類され、情報的サポート（アドバイスを求める）と情緒的サポート（共感してもらう）の両方を含む。一人で抱え込まずに外に出せる力を持っている。",
+    strength: "助けを求められるのは、実はとても高度な社会的スキル。ストレス研究でも、社会的サポートの充実はストレスの緩衝効果（バッファー効果）を持つことが広く示されている。孤立しにくく、支え合える関係を構築できる。",
+    trap: "相手の反応に自分のメンタルが左右されやすい面がある。「わかってもらえなかった」が新たなストレスになるループに入ると、人に頼ること自体が怖くなることも。また、自分の感情を外に出す前に整理する時間が不足しがちになる。",
+    perspective: "人に頼れるのは本当に素晴らしいこと。一つだけ試してみてほしいのは、誰かに話す前に、自分の中で「今の気持ちに名前をつける」こと。『不安』なのか『悲しい』のか『悔しい』のか。ラベルを貼ってから渡すと、相手も受け取りやすくなるし、自分の理解も深まるよ。"
+  }
+};
+
+let currentQ = 0;
+let scores = {};
+
+function initScores() {
+  scores = { analyst: 0, escaper: 0, absorber: 0, armor: 0, optimist: 0, connector: 0 };
+}
+
+function startQuiz() {
+  initScores();
+  currentQ = 0;
+  document.getElementById('start-screen').classList.remove('active');
+  document.getElementById('question-screen').classList.add('active');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  const container = document.getElementById('question-container');
+  container.classList.remove('fade-in');
+  void container.offsetWidth;
+  container.classList.add('fade-in');
+
+  document.getElementById('progress-fill').style.width = ((currentQ) / questions.length * 100) + '%';
+  document.getElementById('question-number').textContent = `QUESTION ${currentQ + 1} / ${questions.length}`;
+  document.getElementById('question-text').textContent = q.q;
+
+  const optsContainer = document.getElementById('options-container');
+  optsContainer.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt.text;
+    btn.onclick = () => selectOption(i);
+    optsContainer.appendChild(btn);
+  });
+}
+
+function selectOption(idx) {
+  const opt = questions[currentQ].opts[idx];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.style.pointerEvents = 'none');
+  btns[idx].classList.add('selected');
+
+  for (const [type, score] of Object.entries(opt.scores)) {
+    scores[type] = (scores[type] || 0) + score;
+  }
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < questions.length) {
+      showQuestion();
+    } else {
+      document.getElementById('progress-fill').style.width = '100%';
+      setTimeout(showResult, 400);
+    }
+  }, 500);
+}
+
+function getTopType() {
+  let maxScore = 0;
+  let topType = 'analyst';
+  for (const [type, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      topType = type;
+    }
+  }
+  return topType;
+}
+
+function getSubTypes() {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  return sorted.slice(1, 3).filter(s => s[1] > 0).map(s => ({
+    key: s[0],
+    ...types[s[0]],
+    score: s[1]
+  }));
+}
+
+function showResult() {
+  document.getElementById('question-screen').classList.remove('active');
+  const resultScreen = document.getElementById('result-screen');
+  resultScreen.classList.add('active');
+
+  const topType = getTopType();
+  const t = types[topType];
+  const subTypes = getSubTypes();
+
+  let subTypeHTML = '';
+  if (subTypes.length > 0) {
+    subTypeHTML = `
+      <div class="result-section">
+        <div class="result-section-title">🎭 サブタイプ傾向</div>
+        <p>${subTypes.map(s => `<span style="color:${s.color}">${s.emoji} ${s.name}</span>`).join('　と　')}の傾向も持ち合わせています。状況やストレスの種類によって、こちらのモードに切り替わることも。</p>
+      </div>
+    `;
+  }
+
+  resultScreen.innerHTML = `
+    <div class="fade-in">
+      <div class="result-badge">YOUR TYPE</div>
+      <div class="result-type-card" style="background:${t.gradient};color:${t.color};border:1px solid ${t.border}">
+        <span class="result-emoji">${t.emoji}</span>
+        <div class="result-type-name" style="color:var(--text)">${t.name}</div>
+        <div class="result-type-sub" style="color:var(--text-dim)">${t.sub}</div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title">📖 あなたのパターン</div>
+        <p>${t.desc}</p>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title">💪 これが強み</div>
+        <p>${t.strength}</p>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title">⚠️ ハマりやすい罠</div>
+        <p>${t.trap}</p>
+      </div>
+
+      ${subTypeHTML}
+
+      <div class="result-section">
+        <div class="result-section-title">💡 視点のプレゼント</div>
+        <div class="perspective-box">
+          <div class="perspective-label">＋1 PERSPECTIVE</div>
+          <p>${t.perspective}</p>
+        </div>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn-retry" onclick="retry()">もう一度やる</button>
+        <button class="btn-share" onclick="shareResult()">結果をシェア</button>
+      </div>
+
+      <div class="credit">
+        Produced by <a href="#">ちゃぼ</a>
+      </div>
+    </div>
+  `;
+}
+
+function retry() {
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('result-screen').innerHTML = '';
+  document.getElementById('start-screen').classList.add('active');
+}
+
+function shareResult() {
+  const topType = getTopType();
+  const t = types[topType];
+  const text = `【ネガティブとの向き合い方タイプ診断】\n\n私のタイプは「${t.name}」${t.emoji}でした！\n\n${t.perspective}\n\n▼ あなたも診断してみて`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'ネガティブとの向き合い方タイプ診断', text: text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-share');
+      btn.textContent = 'コピーしました！';
+      setTimeout(() => btn.textContent = '結果をシェア', 2000);
+    });
+  }
+}
+</script>
+</body>
+</html>
