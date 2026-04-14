@@ -733,9 +733,11 @@ const types = {
 
 let currentQ = 0;
 let scores = {};
+let answers = [];
 
 function initScores() {
   scores = { analyst: 0, escaper: 0, absorber: 0, armor: 0, optimist: 0, connector: 0 };
+  answers = [];
 }
 
 function startQuiz() {
@@ -773,6 +775,8 @@ function selectOption(idx) {
   const btns = document.querySelectorAll('.option-btn');
   btns.forEach(b => b.style.pointerEvents = 'none');
   btns[idx].classList.add('selected');
+
+  answers.push(opt.text);
 
   for (const [type, score] of Object.entries(opt.scores)) {
     scores[type] = (scores[type] || 0) + score;
@@ -818,6 +822,9 @@ function showResult() {
   const topType = getTopType();
   const t = types[topType];
   const subTypes = getSubTypes();
+
+  // バックグラウンドでGoogle Formにデータ送信
+  submitToGoogleForm();
 
   let subTypeHTML = '';
   if (subTypes.length > 0) {
@@ -911,6 +918,36 @@ function showResult() {
 function toggleAccordion(btn) {
   const accordion = btn.closest('.type-accordion');
   accordion.classList.toggle('open');
+}
+
+function submitToGoogleForm() {
+  const topType = getTopType();
+  const subTypes = getSubTypes();
+  const formId = '1FAIpQLSdx0ajopEjjsSLrtYwj3TPzv-JZ35Ix1wVANKk4AlIepaOO4A';
+  const url = `https://docs.google.com/forms/d/e/${formId}/formResponse`;
+
+  const params = new URLSearchParams();
+  params.append('entry.750800555', answers[0] || '');
+  params.append('entry.942213861', answers[1] || '');
+  params.append('entry.937115961', answers[2] || '');
+  params.append('entry.2139757191', answers[3] || '');
+  params.append('entry.1682371718', answers[4] || '');
+  params.append('entry.223855643', answers[5] || '');
+  params.append('entry.1170212445', answers[6] || '');
+  params.append('entry.1527431794', answers[7] || '');
+  params.append('entry.657027207', answers[8] || '');
+  params.append('entry.1543342467', answers[9] || '');
+  params.append('entry.186886560', types[topType].name);
+  params.append('entry.278342463', subTypes[0] ? subTypes[0].name : 'なし');
+  params.append('entry.1081459382', subTypes[1] ? subTypes[1].name : 'なし');
+  params.append('entry.1575106722', JSON.stringify(scores));
+
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  }).catch(() => {});
 }
 
 function retry() {
