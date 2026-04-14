@@ -368,6 +368,140 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ===== OTHER TYPES SECTION ===== */
+  .other-types-section {
+    margin-top: 24px;
+    margin-bottom: 16px;
+  }
+
+  .other-types-header {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .type-accordion {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: all 0.3s ease;
+  }
+
+  .type-accordion.current-type {
+    border-color: var(--accent-a);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .type-accordion-trigger {
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background 0.2s ease;
+  }
+
+  .type-accordion-trigger:hover {
+    background: var(--surface-hover);
+  }
+
+  .type-accordion-trigger .type-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .type-accordion-trigger .type-emoji {
+    font-size: 20px;
+  }
+
+  .type-accordion-trigger .current-badge {
+    font-size: 10px;
+    color: var(--accent-a);
+    background: rgba(124,108,240,0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  .type-accordion-trigger .arrow {
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: transform 0.3s ease;
+  }
+
+  .type-accordion.open .type-accordion-trigger .arrow {
+    transform: rotate(180deg);
+  }
+
+  .type-accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .type-accordion.open .type-accordion-body {
+    max-height: 800px;
+  }
+
+  .type-accordion-content {
+    padding: 0 20px 20px;
+  }
+
+  .type-accordion-content .type-detail-title {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 12px;
+    margin-bottom: 6px;
+  }
+
+  .type-accordion-content .type-detail-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+
+  .type-accordion-content .mini-perspective {
+    background: linear-gradient(135deg, rgba(124,108,240,0.08), rgba(108,240,210,0.08));
+    border: 1px solid rgba(124,108,240,0.15);
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 12px;
+  }
+
+  .type-accordion-content .mini-perspective p {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .type-accordion-content .mini-perspective-label {
+    font-size: 10px;
+    color: var(--accent-a);
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
   .credit {
     text-align: center;
     margin-top: 32px;
@@ -734,11 +868,49 @@ function showResult() {
         <button class="btn-share" onclick="shareResult()">結果をシェア</button>
       </div>
 
+      <div class="other-types-section">
+        <div class="other-types-header">📋 他のタイプも見る</div>
+        ${Object.entries(types).map(([key, tp]) => {
+          const isCurrent = key === topType;
+          return `
+            <div class="type-accordion ${isCurrent ? 'current-type' : ''}" data-type="${key}">
+              <button class="type-accordion-trigger" onclick="toggleAccordion(this)">
+                <span class="type-label">
+                  <span class="type-emoji">${tp.emoji}</span>
+                  ${tp.name}
+                  ${isCurrent ? '<span class="current-badge">YOUR TYPE</span>' : ''}
+                </span>
+                <span class="arrow">▼</span>
+              </button>
+              <div class="type-accordion-body">
+                <div class="type-accordion-content">
+                  <div class="type-detail-title">📖 パターン</div>
+                  <p class="type-detail-text">${tp.desc}</p>
+                  <div class="type-detail-title">💪 強み</div>
+                  <p class="type-detail-text">${tp.strength}</p>
+                  <div class="type-detail-title">⚠️ 罠</div>
+                  <p class="type-detail-text">${tp.trap}</p>
+                  <div class="mini-perspective">
+                    <div class="mini-perspective-label">＋1 PERSPECTIVE</div>
+                    <p>${tp.perspective}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
       <div class="credit">
         Produced by <a href="#">ちゃぼ</a>
       </div>
     </div>
   `;
+}
+
+function toggleAccordion(btn) {
+  const accordion = btn.closest('.type-accordion');
+  accordion.classList.toggle('open');
 }
 
 function retry() {
